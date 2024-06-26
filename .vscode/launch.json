@@ -1,0 +1,16 @@
+{
+	"configurations": [
+	{
+		"name": "(lldb) vrp (seed 0)",
+		"type": "cppdbg",
+		"request": "launch",
+		"program": "${workspaceFolder}/build/vrp/vrp",
+		"args": ["--seed", "0"],
+		"stopAtEntry": false,
+		"cwd": "${workspaceFolder}",
+		"environment": [],
+		"externalConsole": false,
+		"MIMode": "lldb"
+	}
+	]
+}

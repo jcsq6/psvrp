@@ -1,13 +1,15 @@
 #include "info.h"
 #include "command_line.h"
 
+#include "output.h"
+
 #include <iostream>
 
 int main(int argc, char **argv)
 {
 	program_options options = get_command_line(argc, argv);
 	
-	fleet_info i;
+	fleet_info vehicles;
 	{
 		// TODO: read from file
 		std::size_t auto_count = 3;
@@ -23,6 +25,11 @@ int main(int argc, char **argv)
 		vehicle drone_data{.capacity = 5, .max_range = 24, .cost = 1};
 		vehicle truckDrone_data{.capacity = 2000, .max_range = 200, .cost = 30};
 
-		i = fleet_info(auto_count, van_count, drone_count, truckDrone_count, labor_cost, electric_cost, fuel_cost, emmision_cost, auto_data, van_data, drone_data, truckDrone_data);
+		vehicles = fleet_info(auto_count, van_count, drone_count, truckDrone_count, labor_cost, electric_cost, fuel_cost, emmision_cost, auto_data, van_data, drone_data, truckDrone_data);
 	}
+
+	geographic_vec2 knoxville{35.9606, 83.9207};
+	customer_info customers = random_customers(5, knoxville, 10, 1, 6, options.seed);
+
+	std::cout << std::ranges::transform_view(customers.nodes(), [](const customer &c) { return c.pos(); }) << '\n';
 }

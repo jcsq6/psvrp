@@ -1,6 +1,12 @@
 #pragma once
 #include <array>
+#include <vector>
 #include <stdexcept>
+
+#include <ranges>
+#include <random>
+
+#include "nodes.h"
 
 enum class cost_type : std::size_t
 {
@@ -8,22 +14,6 @@ enum class cost_type : std::size_t
 	electric,
 	fuel,
 	emmisions,
-};
-
-enum class vehicle_type
-{
-	base,
-	autonomous,
-	van,
-	drone,
-	truckDrone,
-};
-
-struct vehicle
-{
-	double capacity;
-	double max_range;
-	double cost;
 };
 
 struct cost_data
@@ -94,10 +84,77 @@ private:
 class customer_info
 {
 public:
+	constexpr customer_info() :
+		M_customers{}
+	{
+	}
+
+	template <std::ranges::range Customers>
+	constexpr customer_info(vec2 depot, Customers &&customers)
+	{
+		auto range = std::ranges::single_view(customer{depot, 0}) | customers;
+		M_customers.assign(std::ranges::begin(range), std::ranges::end(range));
+	}
+
+	// returns a distance matrix of customers where index 0 is the depot
+	template <distance_type type>
+	matrix distance_matrix() const
+	{
+		auto size = M_customers.size();
+		matrix res(size, size);
+
+		for (std::size_t i = 0; i < size; ++i)
+			for (std::size_t j = 0; j < size; ++j)
+				res[i][j] = res[j][i] = distance<type>(M_customers[i], M_customers[j]);
+
+		return res;
+	}
+
+	constexpr std::size_t size() const { return M_customers.size(); }
+
+	constexpr const customer &node(std::size_t i) const { return M_customers[i]; }
+	constexpr const customer &depot() const { return M_customers[0]; }
+
+	constexpr const std::vector<customer> &nodes() const { return M_customers; }
 
 private:
-	std::size_t M_size; // number of depots and customers
-	double M_box_size; // size of delivery area in miles
-	std::size_t M_min_demand; // lower limit of customer demand in pounds
-	std::size_t M_max_demand; // upper limit of customer demand in pounds
+	std::vector<customer> M_customers;
+
+	friend customer_info random_customers(std::size_t count, geographic_vec2 center, double box_size, std::size_t min_demand, std::size_t max_demand, std::size_t seed);
 };
+
+/// @param count number of customers
+/// @param center center of box in |latitude, longitude|
+/// @param box_size size of box in miles
+/// @param seed random number generator seed
+/// @returns randomly generated customers
+customer_info random_customers(std::size_t count, geographic_vec2 center, double box_size, std::size_t min_demand, std::size_t max_demand, std::size_t seed = static_cast<std::size_t>(-1))
+{
+	if (seed == static_cast<std::size_t>(-1))
+		seed = std::random_device{}();
+
+	std::mt19937_64 gen(seed);
+
+	constexpr double circ_earth = 2 * std::numbers::pi * earth_radius;
+	double half_size = box_size / 2;
+	double half_width_lat = half_size * (360 / circ_earth); // the same as (half_size * 1.60934 / 111) 
+	double half_width_long = half_size * (360 / (circ_earth * std::cos(radians(center.latitude)))); // same as (half_size * 1.60934 / (111 * cos(radians(center.latitude))))
+
+	std::uniform_real_distribution<double> latitude_vec(-half_width_lat, half_width_lat);
+	std::uniform_real_distribution<double> longitude_vec(-half_width_long, half_width_long);
+	std::uniform_int_distribution<std::size_t> demand_dist(min_demand, max_demand);
+
+	customer_info res;
+	res.M_customers.reserve(count + 1);
+	res.M_customers.emplace_back(vec2{0, 0}, 0); // depot
+
+	for (std::size_t i = 0; i < count; ++i)
+	{
+		auto new_loc = center + geographic_vec2(latitude_vec(gen), longitude_vec(gen));
+		vec2 new_pos = equirectangular_projection(new_loc, center);
+
+		res.M_customers.emplace_back(new_pos, demand_dist(gen));
+	}
+
+	return res;
+}
