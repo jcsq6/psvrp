@@ -7,6 +7,9 @@
 #include <random>
 
 #include "nodes.h"
+#include "macro.h"
+
+VRP_BEG
 
 enum class cost_type : std::size_t
 {
@@ -28,30 +31,30 @@ public:
 	constexpr fleet_info() :
 		M_vehicles{},
 		M_cost{},
-		M_auto_count{}, M_van_count{}, M_drone_count{}, M_truckDrone_count{}, M_fleet_count{},
+		M_auto_count{}, M_van_count{}, M_drone_count{}, M_truck_drone_count{}, M_fleet_count{},
 		M_fleet_capacity{}
 	{
 	}
 
-	constexpr fleet_info(std::size_t auto_count, std::size_t van_count, std::size_t drone_count, std::size_t truckDrone_count,
-		     		   cost_data labor_cost, cost_data electric_cost, cost_data fuel_cost, cost_data emmision_cost,
-		     		   const vehicle &auto_data, const vehicle &van_data, const vehicle &drone_data, const vehicle &truckDrone_data) :
-		M_vehicles{{{}, auto_data, van_data, drone_data, truckDrone_data}},
+	constexpr fleet_info(std::size_t auto_count, std::size_t van_count, std::size_t drone_count, std::size_t truck_drone_count,
+		     		     cost_data labor_cost, cost_data electric_cost, cost_data fuel_cost, cost_data emmision_cost,
+		     		     const vehicle &auto_data, const vehicle &van_data, const vehicle &drone_data, const vehicle &truck_drone_data) :
+		M_vehicles{{{}, auto_data, van_data, drone_data, truck_drone_data}},
 		M_cost{{labor_cost, electric_cost, fuel_cost, emmision_cost}},
-		M_auto_count{auto_count}, M_van_count{van_count}, M_drone_count{drone_count}, M_truckDrone_count{truckDrone_count}, M_fleet_count{auto_count + van_count + drone_count}
+		M_auto_count{auto_count}, M_van_count{van_count}, M_drone_count{drone_count}, M_truck_drone_count{truck_drone_count}, M_fleet_count{auto_count + van_count + drone_count}
 	{
-		if (van_count + drone_count < truckDrone_count)
+		if (van_count + drone_count < truck_drone_count)
 			throw std::runtime_error("Invalid fleet");
 
-		M_fleet_capacity = auto_count * auto_data.capacity + van_count * van_data.capacity + drone_count * drone_data.capacity + truckDrone_count * truckDrone_data.capacity;
+		M_fleet_capacity = auto_count * auto_data.capacity + van_count * van_data.capacity + drone_count * drone_data.capacity + truck_drone_count * truck_drone_data.capacity;
 	}
 
 	constexpr fleet_info(std::size_t base_count,
-		     		   cost_data labor_cost, cost_data electric_cost, cost_data fuel_cost, cost_data emmision_cost,
-		     		   const vehicle &base_data) :
+		     		     cost_data labor_cost, cost_data electric_cost, cost_data fuel_cost, cost_data emmision_cost,
+		     		     const vehicle &base_data) :
 		M_vehicles{{base_data}},
 		M_cost{{labor_cost, electric_cost, fuel_cost, emmision_cost}},
-		M_auto_count{0}, M_van_count{0}, M_drone_count{0}, M_truckDrone_count{0}, M_fleet_count{base_count}
+		M_auto_count{0}, M_van_count{0}, M_drone_count{0}, M_truck_drone_count{0}, M_fleet_count{base_count}
 	{
 		M_fleet_capacity = base_count * base_data.capacity;
 	}
@@ -60,7 +63,7 @@ public:
 	constexpr std::size_t auto_count() const { return M_auto_count; }
 	constexpr std::size_t van_count() const { return M_van_count; }
 	constexpr std::size_t drone_count() const { return M_drone_count; }
-	constexpr std::size_t truckDrone_count() const { return M_truckDrone_count; }
+	constexpr std::size_t truck_drone_count() const { return M_truck_drone_count; }
 
 	constexpr double cost(cost_type type) const { return M_cost[static_cast<std::size_t>(type)].cost; }
 	constexpr double cost_rate(cost_type type) const { return M_cost[static_cast<std::size_t>(type)].cost_rate; }
@@ -74,7 +77,7 @@ private:
 	std::size_t M_auto_count; // number of autonomous vehicles
 	std::size_t M_van_count; // number of electric vehicles
 	std::size_t M_drone_count; // number of standalone drones (maybe unused?)
-	std::size_t M_truckDrone_count; // number of truck-drones
+	std::size_t M_truck_drone_count; // number of truck-drones
 
 	std::size_t M_fleet_count; // total number of vehicles used
 
@@ -105,7 +108,7 @@ public:
 
 		for (std::size_t i = 0; i < size; ++i)
 			for (std::size_t j = 0; j < size; ++j)
-				res[i][j] = res[j][i] = distance<type>(M_customers[i], M_customers[j]);
+				res[i][j] = res[j][i] = vrp::distance<type>(M_customers[i], M_customers[j]);
 
 		return res;
 	}
@@ -158,3 +161,5 @@ customer_info random_customers(std::size_t count, geographic_vec2 center, double
 
 	return res;
 }
+
+VRP_END

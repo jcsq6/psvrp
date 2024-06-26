@@ -1,6 +1,8 @@
 #pragma once
 #include "vectors.h"
 
+VRP_BEG
+
 class customer
 {
 public:
@@ -23,7 +25,7 @@ enum class vehicle_type
 	autonomous,
 	van,
 	drone,
-	truckDrone,
+	truck_drone,
 };
 
 struct vehicle
@@ -32,3 +34,5 @@ struct vehicle
 	double max_range;
 	double cost;
 };
+
+VRP_END

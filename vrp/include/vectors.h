@@ -3,7 +3,9 @@
 #include <vector>
 #include <numbers>
 #include <type_traits>
+#include "macro.h"
 
+VRP_BEG
 class vec2
 {
 public:
@@ -78,6 +80,7 @@ class matrix
 public:
 	using value_type = double;
 
+	constexpr matrix() : M_rows{}, M_cols{} {}
 	constexpr matrix(std::size_t rows, std::size_t cols) : M_data(rows * cols), M_rows{rows}, M_cols{cols} {}
 
 	constexpr std::size_t rows() const { return M_rows; }
@@ -90,3 +93,5 @@ private:
 	std::vector<value_type> M_data;
 	std::size_t M_rows, M_cols;
 };
+
+VRP_END
